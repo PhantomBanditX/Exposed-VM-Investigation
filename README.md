@@ -48,74 +48,86 @@ Findings: `windows-target-1` was confirmed to be internet-facing as of **`2025
 
 ---
 
-### **IOC & Process Activity Analysis**
+### **Brute Force Login Attempt Analysis**
 
-Reviewed process activity and file system behavior to identify PwnCrypt indicators of compromise (IOCs).
+Analyzed failed login attempts on `windows-target-1` to identify any brute-force activity from external sources.
 <br><br>
 ```kql
-let PatientZero  = "cyberclaw-vm";
-let SpecificTime = datetime(2026-04-26T01:13:33.1636981Z);
-DeviceProcessEvents
-| where Timestamp between ((SpecificTime - 5m) .. (SpecificTime + 5m))
-| where InitiatingProcessCommandLine contains "pwncrypt" or FolderPath contains "pwncrypt"
-| project Timestamp, DeviceName, ActionType, FileName, FolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine 
+DeviceLogonEvents
+| where DeviceName == "windows-target-"
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonFailed"
+| where isnotempty(RemoteIP)
+| summarize Attempt = count() by ActionType, RemoteIP, DeviceName
+| order by Attempt 
 ```
-<img alt="Image" src="https://github.com/user-attachments/assets/61dc43d5-4aaf-4813-a802-4dd91d92ee8d" />
+<img alt="Image" src="https://github.com/user-attachments/assets/5a89b5c7-b5c1-4ae7-97ad-9f95c0c62e1c" />
+<br><br>
 
-#### `Timestamp captured: 2026-04-26T01:13:33.1636981Z`
+Findings: Multiple failed login attempts from remote IP addresses targeting `windows-target-1`.
 
-Findings: The attack chain: `cmd.exe` launched `powershell.exe` with execution policy bypass to run `C:\programdata\pwncrypt.ps1`, confirming the ransomware's delivery mechanism.
+Investigated top five suspicious IP addresses to determine whether any successfully authenticated to the target device.
+<br><br>
+```kql
+// Top 5 IPs with the most logon failures
+let RemoteIPsInQuestion = dynamic(["94.26.68.55","94.26.68.54", "103.16.198.50", "61.54.165.97", "103.116.38.114"]);
+DeviceLogonEvents
+| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
+| where ActionType == "LogonSuccess"
+| where RemoteIP has_any(RemoteIPsInQuestion)
+```
+<img alt="Image" src="https://github.com/user-attachments/assets/5e36339f-0073-4bf0-9f05-3e3f1d045ddf" />
+<br><br>
+
+Findings: No successful logons were detected from the top 5 IP addresses associated with the highest failed login activity.
 
 ---
 
 ### **MITRE ATT&CK Mapping: Tactics, Techniques, and Procedures (TTPs)**
 
-- [T1059.001 – Command and Scripting Interpreter: PowerShell](https://attack.mitre.org/techniques/T1059/001/)
+- [T1110.001 - Brute Force: Password Guessing](https://attack.mitre.org/techniques/T1110/001/)
 
-- [T1685 - Disable or Modify Tools](https://attack.mitre.org/techniques/T1685/)
+- [T1046 - Network Service Discovery](https://attack.mitre.org/techniques/T1046/)
 
-- [T1486 – Data Encrypted for Impact](https://attack.mitre.org/techniques/T1486/)
+- [T1589 - Gather Victim Identity Information](https://attack.mitre.org/techniques/T1589/)
 
-- [T1059.003 – Command and Scripting Interpreter: Windows Command Shell](https://attack.mitre.org/techniques/T1059/003/)
+- [T1078 - Valid Accounts](https://attack.mitre.org/techniques/T1078/)
 
-- [T1027 – Obfuscated/Hidden Files and Information](https://attack.mitre.org/techniques/T1027/)
+- [T1110.003 - Brute Force: Password Spraying](https://attack.mitre.org/techniques/T1110/003/)
+
+- [T1190 - Exploit Public-Facing Application](https://attack.mitre.org/techniques/T1190/)
 
 ---
 
 ## 3. Response
 
-To contain the threat and prevent further encryption, take the following actions:
-<br><br>
-<img width="635" alt="Image" src="https://github.com/user-attachments/assets/dd5770db-ad54-4a7d-9b25-d727cb5d1d94" />
-<br><br>
+- Review and reset passwords for potentially targeted accounts.
+- Block top offending IP addresses across perimeter security controls.
+- Enable temporary monitoring alerts for all authentication attempts to the affected system.
 
-- Immediately isolate `cyberclaw-vm` from the network to prevent lateral movement or further malicious activity.
-- Terminate any active `powershell.exe` processes initiated by `cmd.exe`, as they are tied to the malicious execution chain.
-- Remove `C:\ProgramData\pwncrypt.ps1` and all related ransomware artifacts from the system.
-- Reimage or rebuild `cyberclaw-vm` to a **known-good baseline** to ensure full eradication and integrity restoration.
 
 ---
 
 ## 4. Documentation
+
 Findings:
 
-- Ransomware execution confirmed via PowerShell invocation from command shell.
-- File staging behavior observed in Desktop and Temp directories.
-- Execution chain validated through correlated process and file telemetry.
-- System compromise contained and remediated through isolation and reimaging.
+- `windows-target-1` was unintentionally exposed to the public internet for an extended duration.
+- 369 failed authentication attempts were observed from multiple external IP addresses.
+- No successful logins were detected from the top five most active offending IPs.
+- The system lacked an account lockout policy, enabling unrestricted brute-force attempts.
   
 ---
 
 ## 5. Improvement
 
-- Implement Ransomware Detection & Blocking (PowerShell execution and `.pwncrypt` file activity)
-- Enable Continuous Endpoint Monitoring (`cmd.exe` → `powershell.exe` and abnormal file renaming)
-- Restrict PowerShell Execution (block or tightly control -ExecutionPolicy Bypass)
-- Enable Detailed Security Logging (process creation, script execution, and file system changes)
+- Enforce account lockout policies across legacy and high-risk systems to mitigate brute-force attacks.
+- Reduce internet exposure by implementing strict network segmentation and hardened firewall rules.
+- Apply geo-blocking and conditional access policies to limit unauthorized external traffic.
 
 ---
 ## 🧾Summary                   
-A ransomware variant, **PwnCrypt**, was detected on the host `cyberclaw-vm` using a PowerShell-based payload that encrypted files located in `C:\Users\Public\Desktop`. The investigation revealed files being created on the Desktop and rapidly renamed in the Temp directory with the `.pwncrypt` extension. Telemetry also showed `cmd.exe` launching `powershell.exe` with the **-ExecutionPolicy Bypass** flag to execute a script from `C:\ProgramData\pwncrypt.ps1`. The affected system was immediately isolated, malicious artifacts were removed, and the host was reimaged to restore a clean state.
+Host `windows-target-1` was mistakenly left internet-facing, resulting in sustained brute-force login attempts. While no unauthorized access was confirmed, the absence of lockout protections significantly increased security risk.
 
 ## References
 - [NIST SP 800-61r3](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-61r2.pdf)
