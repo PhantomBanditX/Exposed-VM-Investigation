@@ -66,6 +66,8 @@ DeviceLogonEvents
 
 Findings: Multiple failed login attempts from remote IP addresses targeting `windows-target-1`.
 
+------
+
 Investigated top five suspicious IP addresses to determine whether any successfully authenticated to the target device.
 <br><br>
 ```kql
