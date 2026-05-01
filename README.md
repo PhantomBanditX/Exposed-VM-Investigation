@@ -43,7 +43,8 @@ DeviceInfo
 
 <img alt="Image" src="https://github.com/user-attachments/assets/355b2b55-66af-4335-857f-0b4abff580ee" />
 <br><br>
-Findings: `windows-target-1` was confirmed to be internet-facing as of `2025-05-07T23:14:33Z`.
+
+Findings: `windows-target-1` was confirmed to be internet-facing as of **`2025-05-07T23:14:33Z`**.
 
 ---
 
