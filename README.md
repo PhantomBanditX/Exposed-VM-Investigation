@@ -1,5 +1,7 @@
 # Internet-Facing Brute Force Activity
 
+<p align="center"> <img width="680" alt="Image" src="https://github.com/user-attachments/assets/26cd523d-2e23-471b-8460-490b982f5f64" /> </p>
+
 ## 1. Preparation
 
 ### Scenario
