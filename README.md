@@ -1,4 +1,4 @@
-# Exposed VM Investigation
+# Internet-Facing VM Brute Force Investigation
 
 ## 1. Preparation
 
