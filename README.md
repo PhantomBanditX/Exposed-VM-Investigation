@@ -1,6 +1,6 @@
 # Internet-Facing Brute Force Activity
 
-<p align="center"> <img height="635" alt="Image" src="https://github.com/user-attachments/assets/26cd523d-2e23-471b-8460-490b982f5f64" /> </p>
+<img width="1167" height="583" alt="Image" src="https://github.com/user-attachments/assets/26cba822-8193-40d9-82aa-b9b4e10b8d88" />
 
 ## 1. Preparation
 
