@@ -1,4 +1,4 @@
-# Internet-Facing VM Brute Force Investigation
+# Internet-Facing Brute Force Activity
 
 ## 1. Preparation
 
