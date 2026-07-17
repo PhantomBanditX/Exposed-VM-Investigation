@@ -26,7 +26,7 @@ During routine maintenance, the security team is tasked with investigating any V
 ### Components, Tools, and Technologies Employed
 
 - **Cloud Environment:** Microsoft Azure (VM-Windows target machine)
-- **Threat Detection Platform:** Microsoft Defender for Endpoint (MDE)
+- **Threat Detection Platform:** Microsoft Defender XDR Advanced Hunting with Microsoft Defender for Endpoint (MDE) telemetry
   
 ----
 
